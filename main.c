@@ -42,18 +42,40 @@ int main(int argc, char *argv[])
     printf("size of entry : %lu bytes\n", sizeof(entry));
     e = pHead;
     e->pNext = NULL;
-
+#if defined(OPT)
+    //hash variabe
+#define  TABLE_SIZE 1000
+    entry *ht[TABLE_SIZE] = {NULL};
+    entry *htHead[TABLE_SIZE] = {NULL};
+#endif
 #if defined(__GNUC__)
+#if defined(OPT)
+    __builtin___clear_cache((char *) htHead, (char *) htHead + TABLE_SIZE*sizeof(entry));
+#else
     __builtin___clear_cache((char *) pHead, (char *) pHead + sizeof(entry));
 #endif
+#endif
     clock_gettime(CLOCK_REALTIME, &start);
+
     while (fgets(line, sizeof(line), fp)) {
         while (line[i] != '\0')
             i++;
         line[i - 1] = '\0';
         i = 0;
+#if defined(OPT)
+        unsigned int index = hashing(line) ;
+
+        if(ht[index]==NULL) {
+            htHead[index] = (entry *) malloc(sizeof(entry));
+            ht[index] = htHead[index];
+        }
+
+        ht[index] = append(line,ht[index]);
+#else
         e = append(line, e);
+#endif
     }
+
     clock_gettime(CLOCK_REALTIME, &end);
     cpu_time1 = diff_in_second(start, end);
 
@@ -64,14 +86,22 @@ int main(int argc, char *argv[])
 
     /* the givn last name to find */
     char input[MAX_LAST_NAME_SIZE] = "zyxel";
+#if defined(OPT)
+    int hash_addr = hashing(input);
+    e = htHead[hash_addr];
+#else
     e = pHead;
-
+#endif
     assert(findName(input, e) &&
            "Did you implement findName() in " IMPL "?");
     assert(0 == strcmp(findName(input, e)->lastName, "zyxel"));
 
 #if defined(__GNUC__)
+#if defined(OPT)
+    __builtin___clear_cache((char *) htHead, (char *) htHead + TABLE_SIZE*sizeof(entry));
+#else
     __builtin___clear_cache((char *) pHead, (char *) pHead + sizeof(entry));
+#endif
 #endif
     /* compute the execution time */
     clock_gettime(CLOCK_REALTIME, &start);
@@ -90,9 +120,14 @@ int main(int argc, char *argv[])
 
     printf("execution time of append() : %lf sec\n", cpu_time1);
     printf("execution time of findName() : %lf sec\n", cpu_time2);
-
+#if defined(OPT)
+    for(i=0; i<TABLE_SIZE; i++) {
+        if(htHead[i]->pNext)
+            free(htHead[i]->pNext);
+    }
+#else
     if (pHead->pNext) free(pHead->pNext);
     free(pHead);
-
+#endif
     return 0;
 }

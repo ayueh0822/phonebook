@@ -25,6 +25,6 @@ typedef struct MORE_INF {
 } more_inf;
 
 entry *findName(char lastname[], entry *pHead);
-entry *append(char lastName[], entry *e);
+entry *append(char lastName[],entry *e);
 
 #endif

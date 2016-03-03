@@ -19,10 +19,23 @@ entry *findName(char lastname[], entry *pHead)
 
 entry *append(char lastName[], entry *e)
 {
+    /* allocate memory for the new entry and put lastName */
     e->pNext = (entry *) malloc(sizeof(entry));
     e = e->pNext;
     strcpy(e->lastName, lastName);
     e->pNext = NULL;
 
     return e;
+}
+
+int hashing(unsigned char *str)
+{
+    unsigned int hash = 5381;
+    int c;
+    unsigned int result;
+    while (c = *str++)
+        hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
+
+    result = hash % 1000;
+    return result;
 }
