@@ -7,7 +7,6 @@
 #include IMPL
 
 #define DICT_FILE "./dictionary/words.txt"
-
 static double diff_in_second(struct timespec t1, struct timespec t2)
 {
     struct timespec diff;
@@ -42,14 +41,14 @@ int main(int argc, char *argv[])
     printf("size of entry : %lu bytes\n", sizeof(entry));
     e = pHead;
     e->pNext = NULL;
-#if defined(OPT)
+#if OPT==2
     //hash variabe
-#define  TABLE_SIZE 1000
+#define TABLE_SIZE 1000
     entry *ht[TABLE_SIZE] = {NULL};
     entry *htHead[TABLE_SIZE] = {NULL};
 #endif
 #if defined(__GNUC__)
-#if defined(OPT)
+#if OPT==2
     __builtin___clear_cache((char *) htHead, (char *) htHead + TABLE_SIZE*sizeof(entry));
 #else
     __builtin___clear_cache((char *) pHead, (char *) pHead + sizeof(entry));
@@ -62,20 +61,19 @@ int main(int argc, char *argv[])
             i++;
         line[i - 1] = '\0';
         i = 0;
-#if defined(OPT)
-        unsigned int index = hashing(line) ;
-
+#if OPT==2
+        unsigned int index = hashing(line,TABLE_SIZE);
         if(ht[index]==NULL) {
             htHead[index] = (entry *) malloc(sizeof(entry));
+            strcpy(htHead[index]->lastName, line);
             ht[index] = htHead[index];
-        }
-
-        ht[index] = append(line,ht[index]);
+        } else
+            ht[index] = append(line,ht[index]);
 #else
         e = append(line, e);
 #endif
     }
-
+    printf("pHead lastName:%s\n",pHead->lastName);
     clock_gettime(CLOCK_REALTIME, &end);
     cpu_time1 = diff_in_second(start, end);
 
@@ -86,8 +84,8 @@ int main(int argc, char *argv[])
 
     /* the givn last name to find */
     char input[MAX_LAST_NAME_SIZE] = "zyxel";
-#if defined(OPT)
-    int hash_addr = hashing(input);
+#if OPT==2
+    int hash_addr = hashing(input,TABLE_SIZE);
     e = htHead[hash_addr];
 #else
     e = pHead;
@@ -97,7 +95,7 @@ int main(int argc, char *argv[])
     assert(0 == strcmp(findName(input, e)->lastName, "zyxel"));
 
 #if defined(__GNUC__)
-#if defined(OPT)
+#if OPT==2
     __builtin___clear_cache((char *) htHead, (char *) htHead + TABLE_SIZE*sizeof(entry));
 #else
     __builtin___clear_cache((char *) pHead, (char *) pHead + sizeof(entry));
@@ -110,8 +108,10 @@ int main(int argc, char *argv[])
     cpu_time2 = diff_in_second(start, end);
 
     FILE *output;
-#if defined(OPT)
-    output = fopen("opt.txt", "a");
+#if OPT==1
+    output = fopen("opt1.txt", "a");
+#elif OPT==2
+    output = fopen("opt2.txt", "a");
 #else
     output = fopen("orig.txt", "a");
 #endif
@@ -120,7 +120,7 @@ int main(int argc, char *argv[])
 
     printf("execution time of append() : %lf sec\n", cpu_time1);
     printf("execution time of findName() : %lf sec\n", cpu_time2);
-#if defined(OPT)
+#if OPT==2
     for(i=0; i<TABLE_SIZE; i++) {
         if(htHead[i]->pNext)
             free(htHead[i]->pNext);

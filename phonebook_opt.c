@@ -27,7 +27,7 @@ entry *append(char lastName[], entry *e)
     return e;
 }
 
-int hashing(unsigned char *str)
+unsigned int hashing(unsigned char *str)
 {
     unsigned int hash = 5381;
     int c;
